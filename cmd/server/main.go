@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 
+	"cinema-booking/backend/internal/app"
 	"cinema-booking/backend/internal/config"
 	"cinema-booking/backend/internal/database"
-	"cinema-booking/backend/internal/handler"
+	"cinema-booking/backend/internal/routes"
+	"cinema-booking/backend/internal/seed"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -32,10 +34,17 @@ func main() {
 		_ = redisClient.Close()
 	}()
 
+	a := app.New(cfg, mongoClient, redisClient)
+
+	if err := seed.SeedInitialData(a.Database); err != nil {
+		log.Fatalf("failed to seed data: %v", err)
+	}
+
 	e := echo.New()
 	e.HideBanner = true
 
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
+	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{cfg.FrontendOrigin},
@@ -55,8 +64,9 @@ func main() {
 		},
 	}))
 
-	healthHandler := handler.NewHealthHandler()
-	e.GET("/health", healthHandler.HealthCheck)
+	routes.Register(e, a)
+	// healthHandler := handler.NewHealthHandler()
+	// e.GET("/health", healthHandler.HealthCheck)
 
 	log.Printf("server started on :%s", cfg.AppPort)
 	if err := e.Start(":" + cfg.AppPort); err != nil {
