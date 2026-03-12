@@ -4,7 +4,7 @@ type MovieResponse struct {
 	ID              string `json:"id"`
 	Title           string `json:"title"`
 	Description     string `json:"description"`
-	DurationMinutes int    `json:"suration_minutes"`
+	DurationMinutes int    `json:"duration_minutes"`
 	PosterURL       string `json:"poster_url"`
 }
 

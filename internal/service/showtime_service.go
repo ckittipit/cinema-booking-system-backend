@@ -11,11 +11,13 @@ import (
 
 type ShowtimeService struct {
 	shotimeRepository *repository.ShowtimeRepository
+	bookingRepository *repository.BookingRepository
 }
 
-func NewShowtimeService(showtimeRepository *repository.ShowtimeRepository) *ShowtimeService {
+func NewShowtimeService(showtimeRepository *repository.ShowtimeRepository, bookingRepository *repository.BookingRepository) *ShowtimeService {
 	return &ShowtimeService{
 		shotimeRepository: showtimeRepository,
+		bookingRepository: bookingRepository,
 	}
 }
 
@@ -64,15 +66,31 @@ func (s *ShowtimeService) GetSeatMapByShowtimeID(ctx context.Context, showtimeID
 		return nil, err
 	}
 
+	bookedSeatIDs, err := s.bookingRepository.FindConfirmSeatIDsByShowtimeID(ctx, objectID)
+	if err != nil {
+		return nil, err
+	}
+
+	bookedSet := make(map[string]bool, len(bookedSeatIDs))
+	for _, seatID := range bookedSeatIDs {
+		bookedSet[seatID] = true
+	}
+
 	seats := make([]dto.SeatResponse, 0)
 
 	for row := 0; row < showtime.SeatRows; row++ {
 		rowLetter := string(rune('A' + row))
 		for col := 1; col <= showtime.SeatCols; col++ {
 			seatID := fmt.Sprintf("%s%d", rowLetter, col)
+			status := "AVAILABLE"
+
+			if bookedSet[seatID] {
+				status = "BOOKED"
+			}
+
 			seats = append(seats, dto.SeatResponse{
 				SeatID: seatID,
-				Status: "AVAILABEL",
+				Status: status,
 			})
 		}
 	}

@@ -11,6 +11,7 @@ func Register(e *echo.Echo, a *app.App) {
 	healthHandler := handler.NewHealthHandler()
 	movieHandler := handler.NewMovieHandler(a.MovieService)
 	showtimeHandler := handler.NewShowtimeHandler(a.ShowtimeService)
+	bookingHandler := handler.NewBookingHandler(a.BookingService)
 
 	e.GET("/health", healthHandler.HealthCheck)
 
@@ -20,4 +21,6 @@ func Register(e *echo.Echo, a *app.App) {
 	v1.GET("/movies", movieHandler.GetMovies)
 	v1.GET("/movies/:movieId/showtimes", showtimeHandler.GetShowtimesByMovieID)
 	v1.GET("/showtimes/:showtimeId/seats", showtimeHandler.GetSeatMapByShowtimeID)
+
+	v1.POST("/bookings/confirm", bookingHandler.ConfirmBooking)
 }
