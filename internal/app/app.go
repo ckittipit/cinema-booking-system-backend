@@ -23,6 +23,7 @@ type App struct {
 	MovieService    *service.MovieService
 	ShowtimeService *service.ShowtimeService
 	BookingService  *service.BookingService
+	SeatLockService *service.SeatLockService
 }
 
 func New(cfg *config.Config, mongoClient *mongo.Client, redisClient *redis.Client) *App {
@@ -32,9 +33,10 @@ func New(cfg *config.Config, mongoClient *mongo.Client, redisClient *redis.Clien
 	showtimeRepository := repository.NewShowtimeRepository(db)
 	bookingRepository := repository.NewBookingRepository(db)
 
+	seatLockService := service.NewSeatLockService(redisClient)
 	movieService := service.NewMovieService(movieRepository)
-	showtimeService := service.NewShowtimeService(showtimeRepository, bookingRepository)
-	bookingService := service.NewBookingService(bookingRepository, showtimeRepository)
+	showtimeService := service.NewShowtimeService(showtimeRepository, bookingRepository, seatLockService)
+	bookingService := service.NewBookingService(bookingRepository, showtimeRepository, seatLockService)
 
 	return &App{
 		Config:             cfg,

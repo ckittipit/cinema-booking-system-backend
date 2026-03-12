@@ -5,6 +5,7 @@ import (
 	"cinema-booking/backend/internal/repository"
 	"context"
 	"fmt"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -12,12 +13,18 @@ import (
 type ShowtimeService struct {
 	shotimeRepository *repository.ShowtimeRepository
 	bookingRepository *repository.BookingRepository
+	seatLockService   *SeatLockService
 }
 
-func NewShowtimeService(showtimeRepository *repository.ShowtimeRepository, bookingRepository *repository.BookingRepository) *ShowtimeService {
+func NewShowtimeService(
+	showtimeRepository *repository.ShowtimeRepository,
+	bookingRepository *repository.BookingRepository,
+	seatLockService *SeatLockService,
+) *ShowtimeService {
 	return &ShowtimeService{
 		shotimeRepository: showtimeRepository,
 		bookingRepository: bookingRepository,
+		seatLockService:   seatLockService,
 	}
 }
 
@@ -71,9 +78,21 @@ func (s *ShowtimeService) GetSeatMapByShowtimeID(ctx context.Context, showtimeID
 		return nil, err
 	}
 
+	lockedBookings, err := s.bookingRepository.FindActiveLockedBookingsByShowtimeID(ctx, objectID, time.Now())
+	if err != nil {
+		return nil, err
+	}
+
 	bookedSet := make(map[string]bool, len(bookedSeatIDs))
 	for _, seatID := range bookedSeatIDs {
 		bookedSet[seatID] = true
+	}
+
+	lockedExpiryMap := make(map[string]string, len(lockedBookings))
+	for _, booking := range lockedBookings {
+		if booking.ExpiresAt != nil {
+			lockedExpiryMap[booking.SeatID] = booking.ExpiresAt.Format("2006-01-02 15:04:05")
+		}
 	}
 
 	seats := make([]dto.SeatResponse, 0)
@@ -83,14 +102,19 @@ func (s *ShowtimeService) GetSeatMapByShowtimeID(ctx context.Context, showtimeID
 		for col := 1; col <= showtime.SeatCols; col++ {
 			seatID := fmt.Sprintf("%s%d", rowLetter, col)
 			status := "AVAILABLE"
+			var expiresAt *string
 
 			if bookedSet[seatID] {
 				status = "BOOKED"
+			} else if expiry, ok := lockedExpiryMap[seatID]; ok {
+				status = "LOCKED"
+				expiresAt = &expiry
 			}
 
 			seats = append(seats, dto.SeatResponse{
-				SeatID: seatID,
-				Status: status,
+				SeatID:    seatID,
+				Status:    status,
+				ExpiresAt: expiresAt,
 			})
 		}
 	}

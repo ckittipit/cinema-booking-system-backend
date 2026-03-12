@@ -22,5 +22,6 @@ func Register(e *echo.Echo, a *app.App) {
 	v1.GET("/movies/:movieId/showtimes", showtimeHandler.GetShowtimesByMovieID)
 	v1.GET("/showtimes/:showtimeId/seats", showtimeHandler.GetSeatMapByShowtimeID)
 
-	v1.POST("/bookings/confirm", bookingHandler.ConfirmBooking)
+	v1.POST("/bookings/lock", bookingHandler.LockSeat)
+	v1.POST("/bookings/:bookingId/confirm", bookingHandler.ConfirmBooking)
 }
