@@ -24,5 +24,5 @@ func Register(e *echo.Echo, a *app.App) {
 
 	v1.POST("/bookings/lock", bookingHandler.LockSeat)
 	v1.POST("/bookings/:bookingId/confirm", bookingHandler.ConfirmBooking)
-	v1.POST("bookings/:bookingId/release", bookingHandler.ReleaseBooking)
+	v1.POST("/bookings/:bookingId/release", bookingHandler.ReleaseBooking)
 }
