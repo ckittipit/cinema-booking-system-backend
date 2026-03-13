@@ -5,6 +5,8 @@ import (
 	"cinema-booking/backend/internal/handler"
 
 	"github.com/labstack/echo/v4"
+
+	appmw "cinema-booking/backend/internal/middleware"
 )
 
 func Register(e *echo.Echo, a *app.App) {
@@ -12,8 +14,11 @@ func Register(e *echo.Echo, a *app.App) {
 	movieHandler := handler.NewMovieHandler(a.MovieService)
 	showtimeHandler := handler.NewShowtimeHandler(a.ShowtimeService)
 	bookingHandler := handler.NewBookingHandler(a.BookingService)
+	wsHandler := handler.NewWSHandler(a.Hub)
+	adminHandler := handler.NewAdminHandler(a.AdminService)
 
 	e.GET("/health", healthHandler.HealthCheck)
+	e.GET("/ws", wsHandler.Handle)
 
 	api := e.Group("/api")
 	v1 := api.Group("/v1")
@@ -25,4 +30,10 @@ func Register(e *echo.Echo, a *app.App) {
 	v1.POST("/bookings/lock", bookingHandler.LockSeat)
 	v1.POST("/bookings/:bookingId/confirm", bookingHandler.ConfirmBooking)
 	v1.POST("/bookings/:bookingId/release", bookingHandler.ReleaseBooking)
+
+	admin := v1.Group("/admin")
+	admin.Use(appmw.MockAuthMiddleware)
+	admin.Use(appmw.AdminOnlyModdleware)
+	admin.GET("/bookings", adminHandler.GetBookings)
+	admin.GET("/audit-logs", adminHandler.GetAuditLogs)
 }

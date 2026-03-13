@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type BookingRepository struct {
@@ -235,4 +236,24 @@ func (r *BookingRepository) UpdateStatus(
 
 	_, err := r.collection.UpdateOne(ctx, bson.M{"_id": bookingID}, update)
 	return err
+}
+
+func (r *BookingRepository) FindAll(ctx context.Context, limit int64) ([]model.Booking, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	opts := options.Find().SetSort(bson.M{"created_at": -1}).SetLimit(limit)
+
+	cursor, err := r.collection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var bookings []model.Booking
+	if err := cursor.All(ctx, &bookings); err != nil {
+		return nil, err
+	}
+
+	return bookings, nil
 }

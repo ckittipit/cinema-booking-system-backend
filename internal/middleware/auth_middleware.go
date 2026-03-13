@@ -17,7 +17,7 @@ func MockAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		currentUser := &CurrentUser{
 			UserID: "mock-user-id",
-			Role:   "USER",
+			Role:   "ADMIN",
 			Email:  "user@example.com",
 			Name:   "John Doe",
 		}

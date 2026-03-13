@@ -4,6 +4,7 @@ import (
 	"cinema-booking/backend/internal/dto"
 	"cinema-booking/backend/internal/model"
 	"cinema-booking/backend/internal/repository"
+	"cinema-booking/backend/internal/ws"
 	"context"
 	"fmt"
 	"time"
@@ -15,17 +16,23 @@ type BookingService struct {
 	bookingRepository  *repository.BookingRepository
 	showtimeRepository *repository.ShowtimeRepository
 	seatLockService    *SeatLockService
+	auditLogService    *AuditLogService
+	hub                *ws.Hub
 }
 
 func NewBookingService(
 	bookingRepository *repository.BookingRepository,
 	showtimeRepository *repository.ShowtimeRepository,
 	seatLockService *SeatLockService,
+	auditLogService *AuditLogService,
+	hub *ws.Hub,
 ) *BookingService {
 	return &BookingService{
 		bookingRepository:  bookingRepository,
 		showtimeRepository: showtimeRepository,
 		seatLockService:    seatLockService,
+		auditLogService:    auditLogService,
+		hub:                hub,
 	}
 }
 
@@ -112,6 +119,27 @@ func (s *BookingService) LockSeat(
 
 	expiresAtStr := expiresAt.Format("2006-01-02 15:04:05")
 
+	_ = s.auditLogService.LogEvent(
+		ctx,
+		"SEAT_LOCKED",
+		&booking.UserID,
+		&booking.ShowtimeID,
+		&booking.SeatID,
+		&booking.ID,
+		"Seat locked successfully",
+		map[string]any{
+			"expires_at": expiresAt.Format(time.RFC3339),
+		},
+	)
+
+	s.hub.BroadcastToShowtime(booking.ShowtimeID.Hex(), map[string]any{
+		"type": "seat_locked",
+		"data": map[string]any{
+			"showtime_id": booking.ShowtimeID.Hex(),
+			"seat_id":     booking.SeatID,
+		},
+	})
+
 	return &dto.BookingResponse{
 		ID:         booking.ID.Hex(),
 		UserID:     booking.UserID.Hex(),
@@ -174,6 +202,25 @@ func (s *BookingService) ConfirmBooking(
 	); err != nil {
 		return nil, err
 	}
+
+	_ = s.auditLogService.LogEvent(
+		ctx,
+		"BOOKING_CONFIRMED",
+		&booking.UserID,
+		&booking.ShowtimeID,
+		&booking.SeatID,
+		&booking.ID,
+		"Booking confirmed successfully",
+		nil,
+	)
+
+	s.hub.BroadcastToShowtime(booking.ShowtimeID.Hex(), map[string]any{
+		"type": "seat_confirmed",
+		"data": map[string]any{
+			"showtime_id": booking.ShowtimeID.Hex(),
+			"seat_id":     booking.SeatID,
+		},
+	})
 
 	return &dto.BookingResponse{
 		ID:         booking.ID.Hex(),
@@ -295,6 +342,25 @@ func (s *BookingService) ReleaseBooking(
 		return err
 	}
 
+	_ = s.auditLogService.LogEvent(
+		ctx,
+		"SEAT_RELEASED",
+		&booking.UserID,
+		&booking.ShowtimeID,
+		&booking.SeatID,
+		&booking.ID,
+		"Seat released by user",
+		nil,
+	)
+
+	s.hub.BroadcastToShowtime(booking.ShowtimeID.Hex(), map[string]any{
+		"type": "seat_released",
+		"data": map[string]any{
+			"showtime_id": booking.ShowtimeID.Hex(),
+			"seat_id":     booking.SeatID,
+		},
+	})
+
 	return nil
 }
 
@@ -309,6 +375,25 @@ func (s *BookingService) ExpireTimedOutBookings(ctx context.Context) error {
 	for _, booking := range bookings {
 		_ = s.seatLockService.ReleaseSeatLock(ctx, booking.ShowtimeID.Hex(), booking.SeatID)
 		if err := s.bookingRepository.UpdateStatus(ctx, booking.ID, model.BookingStatusExpired); err != nil {
+			_ = s.auditLogService.LogEvent(
+				ctx,
+				"BOOKING_EXPIRED",
+				&booking.UserID,
+				&booking.ShowtimeID,
+				&booking.SeatID,
+				&booking.ID,
+				"booking expired due to timeout",
+				nil,
+			)
+
+			s.hub.BroadcastToShowtime(booking.ShowtimeID.Hex(), map[string]any{
+				"type": "seat_expired",
+				"data": map[string]any{
+					"showtime_id": booking.ShowtimeID.Hex(),
+					"seat_id":     booking.SeatID,
+				},
+			})
+
 			return err
 		}
 	}
