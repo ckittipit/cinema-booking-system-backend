@@ -82,6 +82,11 @@ func (s *ShowtimeService) GetSeatMapByShowtimeID(ctx context.Context, showtimeID
 	if err != nil {
 		return nil, err
 	}
+	// to debug
+	// fmt.Println("Locked bookings count =", len(lockedBookings))
+	// for _, booking := range lockedBookings {
+	// 	fmt.Println("Locked seat = ", booking.SeatID, "Status =", booking.Status, "ExpiresAt =", booking.ExpiresAt)
+	// }
 
 	bookedSet := make(map[string]bool, len(bookedSeatIDs))
 	for _, seatID := range bookedSeatIDs {

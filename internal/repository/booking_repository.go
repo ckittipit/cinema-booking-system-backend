@@ -161,8 +161,8 @@ func (r *BookingRepository) FindActiveLockedBookingsByShowtimeID(
 	defer cancel()
 
 	filter := bson.M{
-		"showtim_id": showtimeID,
-		"status":     model.BookingStatusLocked,
+		"showtime_id": showtimeID,
+		"status":      model.BookingStatusLocked,
 		"expires_at": bson.M{
 			"$gt": now,
 		},
