@@ -181,3 +181,58 @@ func (r *BookingRepository) FindActiveLockedBookingsByShowtimeID(
 
 	return bookings, nil
 }
+
+func (r *BookingRepository) FindExpiredLockedBookings(
+	ctx context.Context,
+	now time.Time,
+) ([]model.Booking, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	filter := bson.M{
+		"status": model.BookingStatusLocked,
+		"expires_at": bson.M{
+			"$ne":  nil,
+			"$lte": now,
+		},
+	}
+
+	cursor, err := r.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var bookings []model.Booking
+	if err := cursor.All(ctx, &bookings); err != nil {
+		return nil, err
+	}
+
+	return bookings, nil
+}
+
+func (r *BookingRepository) UpdateStatus(
+	ctx context.Context,
+	bookingID primitive.ObjectID,
+	status model.BookingStatus,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	update := bson.M{
+		"$set": bson.M{
+			"status":     status,
+			"updated_at": time.Now(),
+		},
+	}
+
+	if status == model.BookingStatusExpired || status == model.BookingStatusCancelled {
+		update["$unset"] = bson.M{
+			"locked_at":  "",
+			"expires_at": "",
+		}
+	}
+
+	_, err := r.collection.UpdateOne(ctx, bson.M{"_id": bookingID}, update)
+	return err
+}

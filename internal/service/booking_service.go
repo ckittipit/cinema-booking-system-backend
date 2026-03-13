@@ -264,3 +264,54 @@ func isValidSeatID(seatID string, rows int, cols int) bool {
 
 	return seatNumber >= 1 && seatNumber <= cols
 }
+
+func (s *BookingService) ReleaseBooking(
+	ctx context.Context,
+	bookingID string,
+) error {
+	objectID, err := primitive.ObjectIDFromHex(bookingID)
+	if err != nil {
+		return fmt.Errorf("Invalid booking id")
+	}
+
+	booking, err := s.bookingRepository.FindByID(ctx, objectID)
+	if err != nil {
+		return fmt.Errorf("Booking not found")
+	}
+
+	if booking.Status != model.BookingStatusLocked {
+		return fmt.Errorf("Booking is not in locked state")
+	}
+
+	if err := s.seatLockService.ReleaseSeatLock(
+		ctx,
+		booking.ShowtimeID.Hex(),
+		booking.SeatID,
+	); err != nil {
+		return err
+	}
+
+	if err := s.bookingRepository.UpdateStatus(ctx, booking.ID, model.BookingStatusCancelled); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *BookingService) ExpireTimedOutBookings(ctx context.Context) error {
+	now := time.Now()
+
+	bookings, err := s.bookingRepository.FindExpiredLockedBookings(ctx, now)
+	if err != nil {
+		return err
+	}
+
+	for _, booking := range bookings {
+		_ = s.seatLockService.ReleaseSeatLock(ctx, booking.ShowtimeID.Hex(), booking.SeatID)
+		if err := s.bookingRepository.UpdateStatus(ctx, booking.ID, model.BookingStatusExpired); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

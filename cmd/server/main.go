@@ -8,6 +8,7 @@ import (
 	"cinema-booking/backend/internal/app"
 	"cinema-booking/backend/internal/config"
 	"cinema-booking/backend/internal/database"
+	"cinema-booking/backend/internal/jobs"
 	"cinema-booking/backend/internal/routes"
 	"cinema-booking/backend/internal/seed"
 
@@ -35,6 +36,7 @@ func main() {
 	}()
 
 	a := app.New(cfg, mongoClient, redisClient)
+	jobs.StartBookingCleanupJob(a.BookingService)
 
 	if err := seed.SeedInitialData(a.Database); err != nil {
 		log.Fatalf("failed to seed data: %v", err)

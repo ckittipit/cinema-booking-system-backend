@@ -68,3 +68,16 @@ func (h *BookingHandler) ConfirmBooking(c echo.Context) error {
 
 // 	return utils.Created(c, "Booking confirmed successfully", result)
 // }
+
+func (h *BookingHandler) ReleaseBooking(c echo.Context) error {
+	bookingID := c.Param("bookingId")
+	if bookingID == "" {
+		return utils.BadRequest(c, "bookingId is required")
+	}
+
+	if err := h.bookingService.ReleaseBooking(c.Request().Context(), bookingID); err != nil {
+		return utils.BadRequest(c, err.Error())
+	}
+
+	return utils.Success(c, "Booking release successfully", nil)
+}
