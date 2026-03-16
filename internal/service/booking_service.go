@@ -3,6 +3,7 @@ package service
 import (
 	"cinema-booking/backend/internal/dto"
 	"cinema-booking/backend/internal/model"
+	"cinema-booking/backend/internal/mq"
 	"cinema-booking/backend/internal/repository"
 	"cinema-booking/backend/internal/ws"
 	"context"
@@ -17,6 +18,7 @@ type BookingService struct {
 	showtimeRepository *repository.ShowtimeRepository
 	seatLockService    *SeatLockService
 	auditLogService    *AuditLogService
+	bookingEventMQ     *mq.BookingEventMQ
 	hub                *ws.Hub
 }
 
@@ -38,6 +40,7 @@ func NewBookingService(
 
 func (s *BookingService) LockSeat(
 	ctx context.Context,
+	userID string,
 	req dto.LockSeatRequest,
 ) (*dto.BookingResponse, error) {
 	showtimeID, err := primitive.ObjectIDFromHex(req.ShowtimeID)
@@ -82,11 +85,16 @@ func (s *BookingService) LockSeat(
 		return nil, fmt.Errorf("Seat locked already")
 	}
 
-	mockUserID := primitive.NewObjectID()
+	// mockUserID := primitive.NewObjectID()
+	userObjectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user id")
+	}
+
 	expiresAt := now.Add(SeatLockTTL)
 
 	booking := &model.Booking{
-		UserID:     mockUserID,
+		UserID:     userObjectID,
 		ShowtimeID: showtimeID,
 		SeatID:     req.SeatID,
 		Status:     model.BookingStatusLocked,
@@ -154,6 +162,7 @@ func (s *BookingService) LockSeat(
 
 func (s *BookingService) ConfirmBooking(
 	ctx context.Context,
+	userID string,
 	bookingID string,
 ) (*dto.BookingResponse, error) {
 	objectID, err := primitive.ObjectIDFromHex(bookingID)
@@ -202,6 +211,17 @@ func (s *BookingService) ConfirmBooking(
 	); err != nil {
 		return nil, err
 	}
+
+	if booking.UserID.Hex() != userID {
+		return nil, fmt.Errorf("forbidden")
+	}
+
+	_ = s.bookingEventMQ.PublishBookingConfirmed(ctx, mq.BookingConfirmedEvent{
+		BookingID:  booking.ID.Hex(),
+		UserID:     booking.UserID.Hex(),
+		ShowtimeID: booking.ShowtimeID.Hex(),
+		SeatID:     booking.SeatID,
+	})
 
 	_ = s.auditLogService.LogEvent(
 		ctx,
@@ -314,6 +334,7 @@ func isValidSeatID(seatID string, rows int, cols int) bool {
 
 func (s *BookingService) ReleaseBooking(
 	ctx context.Context,
+	userID string,
 	bookingID string,
 ) error {
 	objectID, err := primitive.ObjectIDFromHex(bookingID)
@@ -340,6 +361,10 @@ func (s *BookingService) ReleaseBooking(
 
 	if err := s.bookingRepository.UpdateStatus(ctx, booking.ID, model.BookingStatusCancelled); err != nil {
 		return err
+	}
+
+	if booking.UserID.Hex() != userID {
+		return fmt.Errorf("forbidden")
 	}
 
 	_ = s.auditLogService.LogEvent(

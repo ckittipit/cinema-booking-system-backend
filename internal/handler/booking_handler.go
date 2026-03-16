@@ -2,6 +2,7 @@ package handler
 
 import (
 	"cinema-booking/backend/internal/dto"
+	appmw "cinema-booking/backend/internal/middleware"
 	"cinema-booking/backend/internal/service"
 	"cinema-booking/backend/internal/utils"
 
@@ -28,6 +29,11 @@ func (h *BookingHandler) LockSeat(c echo.Context) error {
 		return utils.BadRequest(c, "showtime_id and seat_id are required")
 	}
 
+	currentUser, ok := c.Get("currentUser").(*appmw.CurrentUser)
+	if !ok || currentUser == nil {
+		return utils.BadRequest(c, "current user not found")
+	}
+
 	result, err := h.bookingService.LockSeat(c.Request().Context(), req)
 	if err != nil {
 		return utils.BadRequest(c, err.Error())
@@ -40,6 +46,11 @@ func (h *BookingHandler) ConfirmBooking(c echo.Context) error {
 	bookingID := c.Param("bookingId")
 	if bookingID == "" {
 		return utils.BadRequest(c, "bookingId is required")
+	}
+
+	currentUser, ok := c.Get("currentUser").(*appmw.CurrentUser)
+	if !ok || currentUser == nil {
+		return utils.BadRequest(c, "current user not found")
 	}
 
 	result, err := h.bookingService.ConfirmBooking(c.Request().Context(), bookingID)
@@ -73,6 +84,11 @@ func (h *BookingHandler) ReleaseBooking(c echo.Context) error {
 	bookingID := c.Param("bookingId")
 	if bookingID == "" {
 		return utils.BadRequest(c, "bookingId is required")
+	}
+
+	currentUser, ok := c.Get("currentUser").(*appmw.CurrentUser)
+	if !ok || currentUser == nil {
+		return utils.BadRequest(c, "current user not found")
 	}
 
 	if err := h.bookingService.ReleaseBooking(c.Request().Context(), bookingID); err != nil {

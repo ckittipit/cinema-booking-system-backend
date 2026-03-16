@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -29,4 +30,17 @@ func (r *UserRepository) FindByFirebaseUID(ctx context.Context, firebaseUID stri
 	}
 
 	return &user, nil
+}
+
+func (r *UserRepository) Create(ctx context.Context, user *model.User) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	result, err := r.colloction.InsertOne(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	user.ID = result.InsertedID.(primitive.ObjectID)
+	return nil
 }

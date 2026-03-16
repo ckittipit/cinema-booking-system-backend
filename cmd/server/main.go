@@ -36,6 +36,7 @@ func main() {
 	}()
 
 	a := app.New(cfg, mongoClient, redisClient)
+	jobs.StartBookingEventConsumer(a.RedisClient, a.AuditLogService)
 	jobs.StartBookingCleanupJob(a.BookingService)
 
 	if err := seed.SeedInitialData(a.Database); err != nil {
