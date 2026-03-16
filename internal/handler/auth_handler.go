@@ -29,14 +29,14 @@ func (h *AuthHandler) Verify(c echo.Context) error {
 		return utils.BadRequest(c, "Missing authorization header")
 	}
 
-	idToken := strings.TrimPrefix(authHeader, "Bearer")
-	if idToken == authHeader {
+	idToken := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	if idToken == authHeader || idToken == "" {
 		return utils.BadRequest(c, "Invalid authorization header")
 	}
 
 	claims, err := h.firebaseAuthService.VerifyIDToken(c.Request().Context(), idToken)
 	if err != nil {
-		return utils.BadRequest(c, "Invalid firebase token")
+		return utils.BadRequest(c, err.Error())
 	}
 
 	uid, _ := claims["user_id"].(string)

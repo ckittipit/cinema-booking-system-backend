@@ -12,7 +12,9 @@ type FirebaseAuthService struct {
 }
 
 func NewFirebaseAuthService(credentialsPath string) (*FirebaseAuthService, error) {
-	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(credentialsPath))
+	// option.WithAuthCredentialsFile(option.ServiceAccount, credentialsPath)
+	// option.WithCredentialsFile(credentialsPath)
+	app, err := firebase.NewApp(context.Background(), nil, option.WithAuthCredentialsFile(option.ServiceAccount, credentialsPath))
 	if err != nil {
 		return nil, err
 	}

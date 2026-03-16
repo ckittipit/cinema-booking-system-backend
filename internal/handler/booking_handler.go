@@ -34,7 +34,7 @@ func (h *BookingHandler) LockSeat(c echo.Context) error {
 		return utils.BadRequest(c, "current user not found")
 	}
 
-	result, err := h.bookingService.LockSeat(c.Request().Context(), req)
+	result, err := h.bookingService.LockSeat(c.Request().Context(), currentUser.UserID, req)
 	if err != nil {
 		return utils.BadRequest(c, err.Error())
 	}
@@ -53,7 +53,7 @@ func (h *BookingHandler) ConfirmBooking(c echo.Context) error {
 		return utils.BadRequest(c, "current user not found")
 	}
 
-	result, err := h.bookingService.ConfirmBooking(c.Request().Context(), bookingID)
+	result, err := h.bookingService.ConfirmBooking(c.Request().Context(), currentUser.UserID, bookingID)
 	if err != nil {
 		return utils.BadRequest(c, err.Error())
 	}
@@ -91,7 +91,7 @@ func (h *BookingHandler) ReleaseBooking(c echo.Context) error {
 		return utils.BadRequest(c, "current user not found")
 	}
 
-	if err := h.bookingService.ReleaseBooking(c.Request().Context(), bookingID); err != nil {
+	if err := h.bookingService.ReleaseBooking(c.Request().Context(), currentUser.UserID, bookingID); err != nil {
 		return utils.BadRequest(c, err.Error())
 	}
 

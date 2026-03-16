@@ -55,6 +55,9 @@ func (m *AuthMiddleware) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		idToken := strings.TrimPrefix(authHeader, "Bearer ")
+		// fmt.Println("auth header exists:", authHeader != "")
+		// fmt.Println("token prefix ok:", idToken != authHeader)
+		// fmt.Println("token dot count:", strings.Count(idToken, "."))
 		if idToken == authHeader || strings.TrimSpace(idToken) == "" {
 			return c.JSON(http.StatusUnauthorized, map[string]any{
 				"success": false,
