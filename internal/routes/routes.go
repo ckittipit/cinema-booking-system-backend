@@ -34,9 +34,9 @@ func Register(e *echo.Echo, a *app.App) {
 
 	bookings := v1.Group("/bookings")
 	bookings.Use(authMiddleware.RequireAuth)
-	v1.POST("/bookings/lock", bookingHandler.LockSeat)
-	v1.POST("/bookings/:bookingId/confirm", bookingHandler.ConfirmBooking)
-	v1.POST("/bookings/:bookingId/release", bookingHandler.ReleaseBooking)
+	bookings.POST("/lock", bookingHandler.LockSeat)
+	bookings.POST("/:bookingId/confirm", bookingHandler.ConfirmBooking)
+	bookings.POST("/:bookingId/release", bookingHandler.ReleaseBooking)
 
 	admin := v1.Group("/admin")
 	admin.Use(authMiddleware.RequireAuth)

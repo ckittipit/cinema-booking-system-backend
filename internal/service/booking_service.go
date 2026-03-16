@@ -125,14 +125,14 @@ func (s *BookingService) LockSeat(
 		return nil, fmt.Errorf("Seat locked already")
 	}
 
-	expiresAtStr := expiresAt.Format("2006-01-02 15:04:05")
+	expiresAtStr := expiresAt.Format(time.RFC3339)
 
 	_ = s.auditLogService.LogEvent(
 		ctx,
 		"SEAT_LOCKED",
 		&booking.UserID,
 		&booking.ShowtimeID,
-		&booking.SeatID,
+		booking.SeatID,
 		&booking.ID,
 		"Seat locked successfully",
 		map[string]any{
@@ -167,16 +167,21 @@ func (s *BookingService) ConfirmBooking(
 ) (*dto.BookingResponse, error) {
 	objectID, err := primitive.ObjectIDFromHex(bookingID)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid booking id")
+		return nil, fmt.Errorf("invalid booking id")
 	}
 
 	booking, err := s.bookingRepository.FindByID(ctx, objectID)
 	if err != nil {
-		return nil, fmt.Errorf("Booking not found")
+		return nil, fmt.Errorf("booking not found")
+	}
+
+	// ownership ต้องเช็กก่อน
+	if booking.UserID.Hex() != userID {
+		return nil, fmt.Errorf("forbidden")
 	}
 
 	if booking.Status != model.BookingStatusLocked {
-		return nil, fmt.Errorf("Booking is not in locked state")
+		return nil, fmt.Errorf("booking is not in locked state")
 	}
 
 	lockValue, err := s.seatLockService.GetSeatLock(
@@ -188,10 +193,10 @@ func (s *BookingService) ConfirmBooking(
 		return nil, err
 	}
 	if lockValue == nil {
-		return nil, fmt.Errorf("Seat lock expired")
+		return nil, fmt.Errorf("seat lock expired")
 	}
 	if lockValue.BookingID != booking.ID.Hex() {
-		return nil, fmt.Errorf("Lock does not belong to this booking")
+		return nil, fmt.Errorf("lock does not belong to this booking")
 	}
 
 	now := time.Now()
@@ -212,35 +217,37 @@ func (s *BookingService) ConfirmBooking(
 		return nil, err
 	}
 
-	if booking.UserID.Hex() != userID {
-		return nil, fmt.Errorf("forbidden")
+	if s.bookingEventMQ != nil {
+		_ = s.bookingEventMQ.PublishBookingConfirmed(ctx, mq.BookingConfirmedEvent{
+			BookingID:  booking.ID.Hex(),
+			UserID:     booking.UserID.Hex(),
+			ShowtimeID: booking.ShowtimeID.Hex(),
+			SeatID:     booking.SeatID,
+		})
 	}
 
-	_ = s.bookingEventMQ.PublishBookingConfirmed(ctx, mq.BookingConfirmedEvent{
-		BookingID:  booking.ID.Hex(),
-		UserID:     booking.UserID.Hex(),
-		ShowtimeID: booking.ShowtimeID.Hex(),
-		SeatID:     booking.SeatID,
-	})
+	if s.auditLogService != nil {
+		_ = s.auditLogService.LogEvent(
+			ctx,
+			"BOOKING_CONFIRMED",
+			&booking.UserID,
+			&booking.ShowtimeID,
+			booking.SeatID,
+			&booking.ID,
+			"booking confirmed successfully",
+			nil,
+		)
+	}
 
-	_ = s.auditLogService.LogEvent(
-		ctx,
-		"BOOKING_CONFIRMED",
-		&booking.UserID,
-		&booking.ShowtimeID,
-		&booking.SeatID,
-		&booking.ID,
-		"Booking confirmed successfully",
-		nil,
-	)
-
-	s.hub.BroadcastToShowtime(booking.ShowtimeID.Hex(), map[string]any{
-		"type": "seat_confirmed",
-		"data": map[string]any{
-			"showtime_id": booking.ShowtimeID.Hex(),
-			"seat_id":     booking.SeatID,
-		},
-	})
+	if s.hub != nil {
+		s.hub.BroadcastToShowtime(booking.ShowtimeID.Hex(), map[string]any{
+			"type": "seat_confirmed",
+			"data": map[string]any{
+				"showtime_id": booking.ShowtimeID.Hex(),
+				"seat_id":     booking.SeatID,
+			},
+		})
+	}
 
 	return &dto.BookingResponse{
 		ID:         booking.ID.Hex(),
@@ -249,7 +256,7 @@ func (s *BookingService) ConfirmBooking(
 		SeatID:     booking.SeatID,
 		Status:     string(booking.Status),
 		Price:      booking.Price,
-		CreatedAt:  booking.CreatedAt.Format("2006-01-02 15:04:05"),
+		CreatedAt:  booking.CreatedAt.Format(time.RFC3339),
 	}, nil
 }
 
@@ -372,7 +379,7 @@ func (s *BookingService) ReleaseBooking(
 		"SEAT_RELEASED",
 		&booking.UserID,
 		&booking.ShowtimeID,
-		&booking.SeatID,
+		booking.SeatID,
 		&booking.ID,
 		"Seat released by user",
 		nil,
@@ -405,7 +412,7 @@ func (s *BookingService) ExpireTimedOutBookings(ctx context.Context) error {
 				"BOOKING_EXPIRED",
 				&booking.UserID,
 				&booking.ShowtimeID,
-				&booking.SeatID,
+				booking.SeatID,
 				&booking.ID,
 				"booking expired due to timeout",
 				nil,

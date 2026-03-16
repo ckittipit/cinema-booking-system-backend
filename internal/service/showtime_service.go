@@ -96,7 +96,7 @@ func (s *ShowtimeService) GetSeatMapByShowtimeID(ctx context.Context, showtimeID
 	lockedExpiryMap := make(map[string]string, len(lockedBookings))
 	for _, booking := range lockedBookings {
 		if booking.ExpiresAt != nil {
-			lockedExpiryMap[booking.SeatID] = booking.ExpiresAt.Format("2006-01-02 15:04:05")
+			lockedExpiryMap[booking.SeatID] = booking.ExpiresAt.Format(time.RFC3339)
 		}
 	}
 

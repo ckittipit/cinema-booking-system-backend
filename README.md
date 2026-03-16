@@ -24,3 +24,17 @@
 - [ ] role แยก USER / ADMIN
 - [ ] env ไม่ hardcode
 - [ ] repo structure
+
+## Run with Docker
+
+1. Create environment files:
+   - `backend/.env`
+   - `frontend/.env`
+
+2. Place Firebase service account file at:
+   - `backend/firebase-service-account.json`
+
+3. Start all services:
+
+```bash
+docker compose up --build

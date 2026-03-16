@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "cinema-booking-system-fb117",
+  "private_key_id": "a897d8f5cb81a9008a8da8b0bdfd8da4ef229294",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDYGQBeE2l9s4qH\nlOGY3//J8Yd2sUYBMRgmArecZihhUQT1C7wSUaY55EpUe9HSF0DVRFDzoV0ZXUkt\n66n0y6g7wIh17mAd0IjG8CItOZY8CTmxJc1VLGESihEL0GyFzJhfkGtwJh45LPkG\njq0qd7TN3JvLP29mTJz3iTmKK+/7E93wQ+d9PU3/9HHaO04AYiQ4ZiinXI/nMW5Q\nz/HkkaRLVqqD+yQLgJcBVf9U49YQOVvXeAvJDToVg/Tsr0Xu833TIIeIQxOPkhgH\nCjpn60fYoQI4Eg+N8p2lNIloQESOnfJnlEexLH7fDYUnWGtnWcHQ/2VfNknd3bqr\n3vt3NRj1AgMBAAECggEACdgS66liOGS/cx9kEU3MJ71xM8Xt3+i5RlgAccDRZsqx\n5ipniGuARHbC43gNgTU03p8HugV4I0tPP1ofyj2k/dQ7bMKtmoYXb2QpuZovOHzQ\nf287qP1GNPnY2D5hhzNtOImj0n5mCSnXjhLEG2EyUxNq5HAdr/d3yhEnlh5oxpNV\n+Y60sTRkt1zR+nJ4f/0RonqNGod9zPIeDfE7Iefu+rdVl8I7IsjMGZJsmd711RxM\n3GCux9miL9GBVeAoAGAH3W4fQvdN2wXsayEVOj5fc4DDWQyHungzd2uQAE4Ck2zm\nImuwVQboz4qtcSeuBWg1sBfQq4bgx8E+WtF4eEUUIQKBgQD9BB5lG8AtLBCvMNdb\nSETXtL/WeLo7XlPbmjfXwtYMjxKn73R5o6nyhCMU0JU9QSQxef8Ql5F4E/3DXkxp\nBHdcrfbDtCjBupEAhC5Ghq02a3irvF8YRbWhRma6U401WjkuyysIU/SUI8O7tiiE\nfMhNFb18HJq2SJz98oUOlwSL1QKBgQDapWwW6ipqwpl6BIq7lOd59Q771rLeYcMo\ndM8AOmFJhPBoegBzkVNLEXCoZ5NlwrgYgn7Pu5cDrCuMOYrWQCQsTfNsDoA/dlSR\nxazDqBCZmSVMRhLK6mIYUYcIsbw9kg0SYxlAeAzSBvM3Qz2mUF8Nky6sFl6vc/aG\nU/fBntCIoQKBgF9K7NOx1vhsb0A8Se/0URFY3yO8xo9ToIvGEqAtnoaOYD1lv12M\n2ZYgVEIjqQGwBhyoUPuDymMKTHoHiwnGh9odHyJoOS11weUK447mbFhhs8oioUI4\nBwddx5UHoNhmScEo/eUeEbC1o6OQIMR9Zsc5l+slrtNWl+JBNAHhuPGdAoGAI72w\nypoirur6naiKaRlxMU1u0poJCTMf7MgTYm0opBT4G4v98OZLoFTMfqrXvGW1JESI\nqDp4+B+3yqdJW7aGczuW1A4Wxsj4EBApKp6ZgBI5t5sozUS9Hk6NbU1ogQQT4PKU\nGSbGqbp7HYh/VmWC9Dwf//90IOgq31BwipUEb6ECgYB9qssZmOtAxkhoo5HDwn9G\n6CwGrAyaX2BF7qqNrz71hghVY6FYQ4POn+NpZwpZkF/EAtcv3UIhqJNv+ctc6As7\ns5iFHwmcE5yfwxAhY2ZDwg/+R98Kp9yxNv0M2bGP2nyjTgWfqQ4LMXejp9uMXla+\nk6xYU01eZoV+dD2tI6XQkA==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@cinema-booking-system-fb117.iam.gserviceaccount.com",
+  "client_id": "116820498680552850419",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40cinema-booking-system-fb117.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

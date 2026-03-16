@@ -46,7 +46,7 @@ func StartBookingEventConsumer(
 				"BOOKING_CONFIRMED_ASYNC",
 				userIDPtr,
 				showtimeIDPtr,
-				&event.SeatID,
+				event.SeatID,
 				bookingIDPtr,
 				"Async consumer processed booking confirmed event",
 				nil,
