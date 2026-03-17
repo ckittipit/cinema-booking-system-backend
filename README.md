@@ -32,7 +32,7 @@
    - `frontend/.env`
 
 2. Place Firebase service account file at:
-   - `backend/firebase-service-account.json`
+   - `backend/firebase-key.json`
 
 3. Start all services:
 
